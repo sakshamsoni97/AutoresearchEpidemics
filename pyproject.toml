@@ -1,0 +1,12 @@
+[project]
+name = "autoresearchepidemics"
+version = "0.1.0"
+description = "This is a project to use LLMs for doing Epedemiological Forecasting Model Research."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.5.0",
+    "pandas>=3.0.3",
+    "scipy>=1.18.0",
+    "six>=1.17.0",
+]
