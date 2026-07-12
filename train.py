@@ -72,7 +72,8 @@ default_params_dict = {
     'r_r': np.log(2) / 10.0,    # log(2) / days_for_recovery
     'r_d': np.log(2) / 10.0,    # log(2) / days_for_death
     'k': 3.0,                   # experimentally set
-    'a': 0.02                   # transmission decay rate (intervention)
+    'a': 0.02,                  # transmission decay rate (intervention)
+    'p_dth': 0.05               # probability of death (scales deaths, decoupled from cases)
 }
 
 param_bounds = [
@@ -81,17 +82,16 @@ param_bounds = [
     (0.001, 0.8),
     (0.01, 0.8),
     (0.1, 10.0),
-    (0.0, 0.5)
+    (0.0, 0.5),
+    (0.01, 0.5)
 ]
-
-p_dth = 0.05 # probability of death
 
 
 ###########################
 # Model & Fitting Functions
 ###########################
 
-def _model(t, x, r_e, r_i, r_r, r_d, k, a):
+def _model(t, x, r_e, r_i, r_r, r_d, k, a, p_dth):
     """
     SEIR based model to compute the change in state from time t to (t+1) given the state at time t and model parameters.
     The model uses 5 primary state variables (susceptible, exposed, infected, recovered & dead) and 5 parameters
@@ -121,8 +121,8 @@ def _get_initial_state(initial_cases:int, initial_deaths:int, params_fitted:List
     Compute initial state to solve the IVP using initial observations and fitted params
     """
 
-    r_e, r_i, r_r, r_d, k, a = params_fitted
-    D_0 = initial_deaths 
+    r_e, r_i, r_r, r_d, k, a, p_dth = params_fitted
+    D_0 = initial_deaths
     R_0 = initial_deaths / p_dth - initial_deaths
     I_0 = initial_cases - R_0 - D_0
     E_0 = I_0 * k
