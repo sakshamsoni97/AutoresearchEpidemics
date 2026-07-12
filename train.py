@@ -84,6 +84,10 @@ param_bounds = [
 
 p_dth = 0.05 # probability of death
 
+optimization_method = 'dual_annealing' # options: 'dual_annealing' or 'tnc', can try other optimizers or combinations of them
+
+tnc_max_iter = 500  # Max num of iterations hyper-parameter for TNC
+
 
 ###########################
 # Model & Fitting Functions
@@ -197,15 +201,26 @@ def train(training_data:pd.DataFrame) -> List[float]:
             """
             return _residuals(params, cases, deaths, T)
 
-        model_fit = dual_annealing(
-            _residuals_fit,
-            x0 = default_params,
-            bounds = param_bounds,
-            callback=_callback_timeout
-        )
+        if optimization_method == 'dual_annealing':
+            model_fit = dual_annealing(
+                _residuals_fit,
+                x0 = default_params,
+                bounds = param_bounds,
+                callback=_callback_timeout
+            )
+        elif optimization_method == 'tnc':
+            model_fit = minimize(
+                _residuals_fit,
+                default_params,
+                method='TNC',
+                bounds=param_bounds,
+                options={'maxiter': tnc_max_iter}
+            )
+        else:
+            raise ValueError(f'Undefined optimization method {optimization_method}')
 
         return list(model_fit.x)
-    except StopIteration as e:
+    except Exception as e:
         logger.error(f"Optimization failed: {e}")
         raise
 
