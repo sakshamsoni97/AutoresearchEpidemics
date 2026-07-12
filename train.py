@@ -139,7 +139,7 @@ def _residuals(params:List[Any], cases:np.array, deaths:np.array, T:np.array) ->
 
         # Weigh recent observations higher
         n = len(cases)
-        weights = np.array([(x / n) ** 8 for x in range(1, n + 1)])
+        weights = np.array([(x / n) ** 12 for x in range(1, n + 1)])
 
         # Relative (MAPE-aligned) squared error; relative errors are scale-free
         # so cases and deaths are already balanced without a rescaling factor.
