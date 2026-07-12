@@ -63,3 +63,6 @@ local_data_preparation.ipynb
 run_logs/*
 run.log
 data/experiment_results/results.tsv
+
+# Fitted model parameters
+data/model_params/*
