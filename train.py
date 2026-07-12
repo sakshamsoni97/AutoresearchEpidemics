@@ -144,8 +144,9 @@ def _predict(params:List[float], initial_state:List, T:np.array):
             args=tuple(params)
         )
         y_sol = solution.y
-        # return cases and deaths prediction
-        return y_sol[2, :], y_sol[4, :]
+        # cumulative cases = everyone who has left S (N - S, exactly monotonic);
+        # deaths are cumulative D
+        return TOTAL_POPULATION - y_sol[0, :], y_sol[4, :]
     except Exception as e:
         logger.error(f"_predict failed for params={params}, initial_state={initial_state}: {e}")
         raise
