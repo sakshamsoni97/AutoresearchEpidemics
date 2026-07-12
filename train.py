@@ -73,7 +73,8 @@ default_params_dict = {
     'r_d': np.log(2) / 10.0,    # log(2) / days_for_death
     'k': 3.0,                   # experimentally set
     'a': 0.02,                  # transmission decay rate (intervention)
-    'p_dth': 0.05               # probability of death (scales deaths, decoupled from cases)
+    'p_dth': 0.05,              # case fatality ratio (deaths = p_dth * lagged cases)
+    'lag': 10.0                 # days from infection to death
 }
 
 param_bounds = [
@@ -83,7 +84,8 @@ param_bounds = [
     (0.01, 0.8),
     (0.1, 10.0),
     (0.0, 0.5),
-    (0.01, 0.5)
+    (0.01, 0.5),
+    (0.0, 21.0)
 ]
 
 
@@ -91,7 +93,7 @@ param_bounds = [
 # Model & Fitting Functions
 ###########################
 
-def _model(t, x, r_e, r_i, r_r, r_d, k, a, p_dth):
+def _model(t, x, r_e, r_i, r_r, r_d, k, a, p_dth, lag):
     """
     SEIR based model to compute the change in state from time t to (t+1) given the state at time t and model parameters.
     The model uses 5 primary state variables (susceptible, exposed, infected, recovered & dead) and 5 parameters
@@ -121,7 +123,7 @@ def _get_initial_state(initial_cases:int, initial_deaths:int, params_fitted:List
     Compute initial state to solve the IVP using initial observations and fitted params
     """
 
-    r_e, r_i, r_r, r_d, k, a, p_dth = params_fitted
+    r_e, r_i, r_r, r_d, k, a, p_dth, lag = params_fitted
     D_0 = initial_deaths
     R_0 = initial_deaths / p_dth - initial_deaths
     I_0 = initial_cases - R_0 - D_0
@@ -144,9 +146,12 @@ def _predict(params:List[float], initial_state:List, T:np.array):
             args=tuple(params)
         )
         y_sol = solution.y
-        # cumulative cases = everyone who has left S (N - S, exactly monotonic);
-        # deaths are cumulative D
-        return TOTAL_POPULATION - y_sol[0, :], y_sol[4, :]
+        # cumulative cases = everyone who has left S (N - S, exactly monotonic)
+        cases = TOTAL_POPULATION - y_sol[0, :]
+        # deaths = case fatality ratio * cumulative cases lagged by infection-to-death time
+        p_dth, lag = params[6], params[7]
+        deaths = p_dth * np.interp(T - lag, T, cases, left=0.0)
+        return cases, deaths
     except Exception as e:
         logger.error(f"_predict failed for params={params}, initial_state={initial_state}: {e}")
         raise
