@@ -71,7 +71,8 @@ default_params_dict = {
     'r_i': np.log(2) / 5.0,     # log(2) / days_of_incubation
     'r_r': np.log(2) / 10.0,    # log(2) / days_for_recovery
     'r_d': np.log(2) / 10.0,    # log(2) / days_for_death
-    'k': 3.0                    # experimentally set
+    'k': 3.0,                   # experimentally set
+    'a': 0.02                   # transmission decay rate (intervention)
 }
 
 param_bounds = [
@@ -79,7 +80,8 @@ param_bounds = [
     (0.05, 0.9),
     (0.01, 0.8),
     (0.01, 0.8),
-    (0.1, 10.0)
+    (0.1, 10.0),
+    (0.0, 0.2)
 ]
 
 p_dth = 0.05 # probability of death
@@ -89,11 +91,11 @@ p_dth = 0.05 # probability of death
 # Model & Fitting Functions
 ###########################
 
-def _model(t, x, r_e, r_i, r_r, r_d, k):
+def _model(t, x, r_e, r_i, r_r, r_d, k, a):
     """
     SEIR based model to compute the change in state from time t to (t+1) given the state at time t and model parameters.
     The model uses 5 primary state variables (susceptible, exposed, infected, recovered & dead) and 5 parameters
-        
+
     :param t: time step
     :param x: state of the infectious disease spread given as a list of variables
     :param r_e : rate of exposure
@@ -101,11 +103,13 @@ def _model(t, x, r_e, r_i, r_r, r_d, k):
     :param r_r : rate of revovery
     :param r_d : rate of death
     :param k : ratio to calculate initial state
+    :param a : exponential decay rate of transmission (models intervention/lockdown)
     """
     assert len(x) == 5, f"Wrong number of input states, got {len(x)}, expected 6"
     S, E, I, R, D = x
-    dSdt = - r_e * S * I / TOTAL_POPULATION
-    dEdt = r_e * S * I / TOTAL_POPULATION - r_i * E
+    beta = r_e * np.exp(-a * t)  # transmission declines over time (lockdown effect)
+    dSdt = - beta * S * I / TOTAL_POPULATION
+    dEdt = beta * S * I / TOTAL_POPULATION - r_i * E
     dIdt = r_i * E - (r_r + r_d) * I
     dRdt = r_r * (1-p_dth) * I
     dDdt = r_d * p_dth * I
@@ -117,7 +121,7 @@ def _get_initial_state(initial_cases:int, initial_deaths:int, params_fitted:List
     Compute initial state to solve the IVP using initial observations and fitted params
     """
 
-    r_e, r_i, r_r, r_d, k = params_fitted    
+    r_e, r_i, r_r, r_d, k, a = params_fitted
     D_0 = initial_deaths 
     R_0 = initial_deaths / p_dth - initial_deaths
     I_0 = initial_cases - R_0 - D_0
