@@ -13,8 +13,9 @@ from typing import List, Tuple, Any
 import time
 import logging
 import os
+import json
 
-from constants import TRAINING_DATA_PATH, START_DATE, SPLIT_DATE, END_DATE, TOTAL_POPULATION
+from utils import TRAINING_DATA_PATH, START_DATE, SPLIT_DATE, END_DATE, TOTAL_POPULATION, TIME_LIMIT_SECONDS, calculate_scores
 
 
 ##################
@@ -48,6 +49,17 @@ def _setup_logging() -> str:
     logger.addHandler(console_handler)
 
     return log_path
+
+##################
+# Time-keeping
+##################
+
+fit_start_time = None # to calculate time-out
+
+def _callback_timeout(x, f, context):
+    if fit_start_time is not None and time.time() - fit_start_time > TIME_LIMIT_SECONDS:
+        print("Time limit reached. Stopping optimization.")
+        raise StopIteration("Time limit exceeded")
 
 
 ##################
@@ -188,12 +200,13 @@ def train(training_data:pd.DataFrame) -> List[float]:
         model_fit = dual_annealing(
             _residuals_fit,
             x0 = default_params,
-            bounds = param_bounds
+            bounds = param_bounds,
+            callback=_callback_timeout
         )
 
         return list(model_fit.x)
-    except Exception as e:
-        logger.error(f"train failed: {e}")
+    except StopIteration as e:
+        logger.error(f"Optimization failed: {e}")
         raise
 
 def forecast(initial_cases:int, initial_deaths:int, optimal_params:List[float], T:List[int]):
@@ -203,48 +216,7 @@ def forecast(initial_cases:int, initial_deaths:int, optimal_params:List[float], 
     initial_state = _get_initial_state(initial_cases, initial_deaths, optimal_params)
 
     return _predict(optimal_params, initial_state, T)
-    
-def _compute_mape(y_true: list, y_pred: list) -> float:
-    """
-    Compute the Mean Absolute Percentage Error (MAPE) between two lists of values
-    :param y_true: list of true historical values
-    :param y_pred: list of predicted values
-    :return: a float corresponding to the MAPE
-    """
-    y_true, y_pred = np.array(y_true), np.array(y_pred)
-    mape = np.mean(np.abs((y_true - y_pred)[y_true > 0] / y_true[y_true > 0])) * 100
-    return mape
 
-
-def calculate_scores(data:pd.DataFrame, optimal_params:List[float]):
-    """
-    Evaluate the performance of the model.
-    """
-    T = np.array(data.time_index.values)
-    training_cutoff_date_dt = pd.to_datetime(SPLIT_DATE).to_pydatetime()
-
-    cases_forecast, deaths_forecast = forecast(data.iloc[0]['case_cnt'], data.iloc[0]['death_cnt'], optimal_params, T)
-
-    train_cases = data[data.date <= training_cutoff_date_dt].case_cnt.values
-    train_deaths = data[data.date <= training_cutoff_date_dt].death_cnt.values
-    T_train = data[data.date <= training_cutoff_date_dt].time_index.values
-    train_cases_pred = cases_forecast[T_train]
-    train_deaths_pred = deaths_forecast[T_train]
-    test_cases = data[data.date > training_cutoff_date_dt].case_cnt.values
-    test_deaths = data[data.date > training_cutoff_date_dt].death_cnt.values
-    T_test = data[data.date > training_cutoff_date_dt].time_index.values
-    test_cases_pred = cases_forecast[T_test]
-    test_deaths_pred = deaths_forecast[T_test]
-
-    evals = {
-        "MAPE Cases Training": _compute_mape(train_cases, train_cases_pred),
-        "MAPE Deaths Training": _compute_mape(train_deaths, train_deaths_pred),
-        "MAPE Cases Test": _compute_mape(test_cases, test_cases_pred),
-        "MAPE Deaths Test": _compute_mape(test_deaths, test_deaths_pred),
-    }
-    evals["Test Score"] = (evals["MAPE Cases Test"] + evals["MAPE Deaths Test"])/2
-
-    return evals
 
 #####################
 # Program entry-point
@@ -266,20 +238,31 @@ def main():
     data = data[(data.date >= start_date_dt) & (data.date <= end_date_dt)].copy().reset_index(drop=True)
     data['time_index'] = (data["date"] - start_date_dt).dt.days.astype(int)
 
-    trainiing_data = data[data.date <= training_cutoff_date_dt].copy()
-    logger.info(f"Training on {len(trainiing_data)} rows (of {len(data)} total)")
+    training_data = data[data.date <= training_cutoff_date_dt].copy()
+    logger.info(f"Training on {len(training_data)} rows (of {len(data)} total)")
 
     fit_start_time = time.time()
-    optimal_params = train(trainiing_data)
+    optimal_params = train(training_data)
     fit_runtime = time.time() - fit_start_time
     logger.info(f"Model fitting completed in {fit_runtime:.2f} seconds")
     logger.info(f"Optimal params: {optimal_params}")
+    fit_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    with open(f"data/model_params/optimal_params_{fit_timestamp}.json", 'w') as f:
+        json.dump(
+            dict(p for p in zip(list(default_params_dict.keys()), optimal_params)),
+            f
+        )
 
-    evals = calculate_scores(data, optimal_params)
-    logger.info(f"Evaluation scores: {evals}")
+    T = np.array(data.time_index.values)
+    cases_forecast, deaths_forecast = forecast(data.iloc[0]['case_cnt'], data.iloc[0]['death_cnt'], optimal_params, T)
 
-    # TODO: print formatted results summary
-    print(evals)
+    evals = calculate_scores(data, cases_forecast, deaths_forecast)
+
+    logger.info('--- Experiment Results ---')
+    for k, v in evals.items():
+        logger.info(f'{k} : {v}')
+    logger.info(f'Fitting run time: {fit_runtime}')
+    logger.info('--------------------------')
 
 if __name__ == "__main__":
     main()
