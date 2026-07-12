@@ -130,13 +130,6 @@ def _get_initial_state(initial_cases:int, initial_deaths:int, params_fitted:List
 
     return [S_0, E_0, I_0, R_0, D_0]
 
-def _apply_bounds(params:List[float]) -> List[float]:
-    params_bounded = [
-        max(min(x, bounds[0]), bounds[1])
-        for (x, bounds) in zip(params, param_bounds)
-    ]
-    return params_bounded
-
 def _predict(params:List[float], initial_state:List, T:np.array):
     """
     Solve the SEIR model IVP and return predictions of cases and deaths.
@@ -162,9 +155,7 @@ def _residuals(params:List[Any], cases:np.array, deaths:np.array, T:np.array) ->
     Create the residual value from fitted parameters, initial state and observations
     """
     try:
-        # Check & apply bounds
-        params = _apply_bounds(params)
-
+        # dual_annealing already keeps params within bounds
         initial_state = _get_initial_state(cases[0], deaths[0], params)
 
         # predict and calc residuals
