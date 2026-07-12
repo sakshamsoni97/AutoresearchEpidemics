@@ -171,16 +171,17 @@ def _residuals(params:List[Any], cases:np.array, deaths:np.array, T:np.array) ->
         cases_pred, deaths_pred = _predict(params, initial_state, T)
 
         # Weigh recent observations higher
-        weights = list(range(1, len(cases) + 1))
-        weights = [( x / len(cases) )**2 for x in weights]
-        # Balance contribution of deaths and cases in the score
-        balance = (cases[-1] / max(deaths[-1], 10))**2
+        n = len(cases)
+        weights = np.array([(x / n) ** 2 for x in range(1, n + 1)])
 
-        res = np.sum(
-            np.multiply((cases - cases_pred)**2, weights) +
-            balance * np.multiply((deaths - deaths_pred)**2, weights)
-        )
-        return res
+        # Relative (MAPE-aligned) squared error; relative errors are scale-free
+        # so cases and deaths are already balanced without a rescaling factor.
+        cmask = cases > 0
+        dmask = deaths > 0
+        case_err = ((cases[cmask] - cases_pred[cmask]) / cases[cmask]) ** 2 * weights[cmask]
+        death_err = ((deaths[dmask] - deaths_pred[dmask]) / deaths[dmask]) ** 2 * weights[dmask]
+
+        return np.sum(case_err) + np.sum(death_err)
     except Exception as e:
         logger.error(f"_residuals failed for params={params}: {e}")
         raise
