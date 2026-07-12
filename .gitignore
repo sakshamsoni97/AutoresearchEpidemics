@@ -58,3 +58,5 @@ ENV/
 
 # Local only files
 local_data_preparation.ipynb
+
+run_logs/*
