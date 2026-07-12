@@ -180,7 +180,8 @@ def _residuals(params:List[Any], cases:np.array, deaths:np.array, T:np.array) ->
 
 def train(training_data:pd.DataFrame) -> List[float]:
     """
-    Fits the model to the cases and deaths and returns the optimal params
+    Fits the model to the cases and deaths and returns the optimal params.
+    Uses the full time budget via multiple random restarts, keeping the best fit.
     """
     try:
         default_params = list(default_params_dict.values())
@@ -194,14 +195,22 @@ def train(training_data:pd.DataFrame) -> List[float]:
             """
             return _residuals(params, cases, deaths, T)
 
-        model_fit = dual_annealing(
-            _residuals_fit,
-            x0 = default_params,
-            bounds = param_bounds,
-            callback=_callback_timeout
-        )
+        t0 = time.time()
+        best = None
+        seed = 0
+        while time.time() - t0 < TIME_LIMIT_SECONDS:
+            model_fit = dual_annealing(
+                _residuals_fit,
+                x0 = default_params,
+                bounds = param_bounds,
+                seed = seed,
+            )
+            if best is None or model_fit.fun < best.fun:
+                best = model_fit
+            seed += 1
 
-        return list(model_fit.x)
+        logger.info(f"Multi-restart: {seed} restarts, best residual {best.fun:.6g}")
+        return list(best.x)
     except StopIteration as e:
         logger.error(f"Optimization failed: {e}")
         raise
