@@ -22,6 +22,10 @@ To start, it is recommended to create a virtual environment. I used `uv` and `ve
 > source .venv/bin/activate
 ```
 
+There are two python scripts provided in the scripts folder to download and set up the training data needed for the experiments, these need to be run in this order -
+1. `> python download_delphi_cases.py` downloads the raw data from a public GitHub repository'
+2. `> python local_data_preparation.py` processes the raw files and saves the outputs to `data/tranining/`
+
 Next, make sure you can run the `train.py` file on the main branch.
 
 ```bash
