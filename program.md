@@ -20,18 +20,18 @@ Once you get confirmation, kick off the experimentation.
 
 ## Experimentation
 
-The training script runs for a **fixed time budget of 5 minutes** (wall clock training time, excluding startup/compilation). You launch it simply as: `uv run train.py`.
+The training script runs for a **fixed time budget of 1 minute** per region (wall clock training time, excluding startup/compilation). You launch it simply as: `uv run train.py`.
 
 **What you CAN do:**
 - Modify `train.py` — this is the only file you edit. The following is fair game: model architecture, optimizer, hyperparameters, etc.
 
 **What you CANNOT do:**
-- Modify `utils.py`. It is read-only. It contains the fixed evaluation, data loading, tokenizer, and training constants (time budget, sequence length, etc).
+- Modify `utils.py`. It is read-only. It contains the fixed evaluation, data loading, and training constants (time budget, sequence length, etc).
 - Install new packages or add dependencies. You can only use what's already in `pyproject.toml`.
 - Modify the evaluation harness. The `"fit_score"` in `utils.py` is the ground truth metric.
 - Use test data for training or change the training cutoff date.
 
-**The goal is simple: get the lowest fit_score.** Since the time budget is fixed, you don't need to worry about training time — it's always 5 minutes. Everything is fair game: change the architecture, the optimizer, the hyperparameters. The only constraint is that the code runs without crashing and finishes within the time budget.
+**The goal is simple: get the lowest fit_score.** Since the time budget is fixed, you don't need to worry about training time — it's always 1 minute. Everything is fair game: change the architecture, the optimizer, the hyperparameters. The only constraint is that the code runs without crashing and finishes within the time budget.
 
 **Simplicity criterion**: All else being equal, simpler is better. A small improvement that adds ugly complexity is not worth it. Conversely, removing something and getting equal or better results is a great outcome — that's a simplification win. When evaluating whether to keep a change, weigh the complexity cost against the improvement magnitude. A 0.1% fit_score improvement that adds 20 lines of hacky code? Probably not worth it. A 1% fit_score improvement from deleting code? Definitely keep. An improvement of ~0 but much simpler code? Keep.
 
@@ -52,7 +52,7 @@ fit_runtime: 11.774402856826782
 --------------------------
 ```
 
-Note that the script is configured to always stop after 5 minutes, so depending on the computing platform of this computer the numbers might look different. You can extract the key metric from the log file:
+Note that the script is configured to always stop after 1 minute per region, so depending on the computing platform of this computer the numbers might look different. You can extract the key metric from the log file:
 
 ```
 grep "^fit_score:" run.log
@@ -99,10 +99,10 @@ LOOP FOREVER:
 
 The idea is that you are a completely autonomous researcher trying things out. If they work, keep. If they don't, discard. And you're advancing the branch so that you can iterate. If you feel like you're getting stuck in some way, you can rewind but you should probably do this very very sparingly (if ever).
 
-**Timeout**: Each experiment should take ~5 minutes total (+ a few seconds for startup and eval overhead). If a run exceeds 10 minutes, kill it and treat it as a failure (discard and revert).
+**Timeout**: Each experiment should take at most ~51 minutes total (+ a few seconds for startup and eval overhead). If a run exceeds 60 minutes, kill it and treat it as a failure (discard and revert).
 
 **Crashes**: If a run crashes (OOM, or a bug, or etc.), use your judgment: If it's something dumb and easy to fix (e.g. a typo, a missing import), fix it and re-run. If the idea itself is fundamentally broken, just skip it, log "crash" as the status in the tsv, and move on.
 
 **NEVER STOP**: Once the experiment loop has begun (after the initial setup), do NOT pause to ask the human if you should continue. Do NOT ask "should I keep going?" or "is this a good stopping point?". The human might be asleep, or gone from a computer and expects you to continue working *indefinitely* until you are manually stopped. You are autonomous. If you run out of ideas, think harder — read papers, re-read the in-scope files for new angles, try combining previous near-misses, try more radical architectural changes. The loop runs until the human interrupts you, period.
 
-As an example use case, a user might leave you running while they sleep. If each experiment takes you ~5 minutes then you can run approx 12/hour, for a total of about 100 over the duration of the average human sleep. The user then wakes up to experimental results, all completed by you while they slept!
+As an example use case, a user might leave you running while they sleep. If each experiment takes you ~10 minutes then you can run approx 6/hour, for a total of about 40 over the duration of the average human sleep. The user then wakes up to experimental results, all completed by you while they slept!

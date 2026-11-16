@@ -15,7 +15,7 @@ import logging
 import os
 import json
 
-from utils import TRAINING_DATA_PATH, START_DATE, SPLIT_DATE, END_DATE, TOTAL_POPULATION, TIME_LIMIT_SECONDS, calculate_scores
+from utils import TIME_LIMIT_SECONDS, SPLIT_DAYS, load_regions, calculate_scores, aggregate_scores
 
 
 ##################
@@ -54,12 +54,17 @@ def _setup_logging() -> str:
 # Time-keeping
 ##################
 
-fit_start_time = None # to calculate time-out
-
-def _callback_timeout(x, f, context):
-    if fit_start_time is not None and time.time() - fit_start_time > TIME_LIMIT_SECONDS:
-        print("Time limit reached. Stopping optimization.")
-        raise StopIteration("Time limit exceeded")
+def _make_callback_timeout(fit_start_time:float):
+    """
+    Returns a dual_annealing callback that stops the optimization once TIME_LIMIT_SECONDS
+    have passed since `fit_start_time`.
+    """
+    def _callback_timeout(x, f, context):
+        if time.time() - fit_start_time > TIME_LIMIT_SECONDS:
+            logger.info("Time limit reached. Stopping optimization.")
+            return True # stop dual_annealing
+        return False
+    return _callback_timeout
 
 
 ##################
@@ -93,7 +98,7 @@ tnc_max_iter = 500  # Max num of iterations hyper-parameter for TNC
 # Model & Fitting Functions
 ###########################
 
-def _model(t, x, r_e, r_i, r_r, r_d, k):
+def _model(t, x, r_e, r_i, r_r, r_d, k, population):
     """
     SEIR based model to compute the change in state from time t to (t+1) given the state at time t and model parameters.
     The model uses 5 primary state variables (susceptible, exposed, infected, recovered & dead) and 5 parameters
@@ -105,18 +110,19 @@ def _model(t, x, r_e, r_i, r_r, r_d, k):
     :param r_r : rate of revovery
     :param r_d : rate of death
     :param k : ratio to calculate initial state
+    :param population : total population of the region
     """
     assert len(x) == 5, f"Wrong number of input states, got {len(x)}, expected 6"
     S, E, I, R, D = x
-    dSdt = - r_e * S * I / TOTAL_POPULATION
-    dEdt = r_e * S * I / TOTAL_POPULATION - r_i * E
+    dSdt = - r_e * S * I / population
+    dEdt = r_e * S * I / population - r_i * E
     dIdt = r_i * E - (r_r + r_d) * I
     dRdt = r_r * (1-p_dth) * I
     dDdt = r_d * p_dth * I
 
     return [dSdt, dEdt, dIdt, dRdt, dDdt]
 
-def _get_initial_state(initial_cases:int, initial_deaths:int, params_fitted:List[float]) -> List[float]:
+def _get_initial_state(initial_cases:int, initial_deaths:int, params_fitted:List[float], population:float) -> List[float]:
     """
     Compute initial state to solve the IVP using initial observations and fitted params
     """
@@ -124,20 +130,21 @@ def _get_initial_state(initial_cases:int, initial_deaths:int, params_fitted:List
     r_e, r_i, r_r, r_d, k = params_fitted    
     D_0 = initial_deaths 
     R_0 = initial_deaths / p_dth - initial_deaths
-    I_0 = initial_cases - R_0 - D_0
+    # Some regions start with deaths/p_dth > cases, which would give negative states; keep at least 1 infected
+    I_0 = max(initial_cases - R_0 - D_0, 1.0)
     E_0 = I_0 * k
-    S_0 = TOTAL_POPULATION - initial_cases - E_0
+    S_0 = population - initial_cases - E_0
 
     return [S_0, E_0, I_0, R_0, D_0]
 
 def _apply_bounds(params:List[float]) -> List[float]:
     params_bounded = [
-        max(min(x, bounds[0]), bounds[1])
+        max(min(x, bounds[1]), bounds[0])
         for (x, bounds) in zip(params, param_bounds)
     ]
     return params_bounded
 
-def _predict(params:List[float], initial_state:List, T:np.array):
+def _predict(params:List[float], initial_state:List, T:np.array, population:float):
     """
     Solve the SEIR model IVP and return predictions of cases and deaths.
     """
@@ -148,7 +155,7 @@ def _predict(params:List[float], initial_state:List, T:np.array):
             y0=initial_state,
             t_span=[T[0], T[-1]],
             t_eval=T,
-            args=tuple(params)
+            args=(*params, population)
         )
         y_sol = solution.y
         # return cases and deaths prediction
@@ -157,7 +164,7 @@ def _predict(params:List[float], initial_state:List, T:np.array):
         logger.error(f"_predict failed for params={params}, initial_state={initial_state}: {e}")
         raise
 
-def _residuals(params:List[Any], cases:np.array, deaths:np.array, T:np.array) -> float:
+def _residuals(params:List[Any], cases:np.array, deaths:np.array, T:np.array, population:float) -> float:
     """
     Create the residual value from fitted parameters, initial state and observations
     """
@@ -165,10 +172,13 @@ def _residuals(params:List[Any], cases:np.array, deaths:np.array, T:np.array) ->
         # Check & apply bounds
         params = _apply_bounds(params)
 
-        initial_state = _get_initial_state(cases[0], deaths[0], params)
+        initial_state = _get_initial_state(cases[0], deaths[0], params, population)
 
         # predict and calc residuals
-        cases_pred, deaths_pred = _predict(params, initial_state, T)
+        cases_pred, deaths_pred = _predict(params, initial_state, T, population)
+        if len(cases_pred) != len(cases):
+            # ODE integration failed part-way for these params: penalize instead of aborting the fit
+            return 1e30
 
         # Weigh recent observations higher
         weights = list(range(1, len(cases) + 1))
@@ -185,7 +195,7 @@ def _residuals(params:List[Any], cases:np.array, deaths:np.array, T:np.array) ->
         logger.error(f"_residuals failed for params={params}: {e}")
         raise
 
-def train(training_data:pd.DataFrame) -> List[float]:
+def train(training_data:pd.DataFrame, population:float) -> List[float]:
     """
     Fits the model to the cases and deaths and returns the optimal params
     """
@@ -199,14 +209,14 @@ def train(training_data:pd.DataFrame) -> List[float]:
             """
             Wrapper around `residuals` to use for fitting the parameters
             """
-            return _residuals(params, cases, deaths, T)
+            return _residuals(params, cases, deaths, T, population)
 
         if optimization_method == 'dual_annealing':
             model_fit = dual_annealing(
                 _residuals_fit,
                 x0 = default_params,
                 bounds = param_bounds,
-                callback=_callback_timeout
+                callback=_make_callback_timeout(time.time())
             )
         elif optimization_method == 'tnc':
             model_fit = minimize(
@@ -224,13 +234,13 @@ def train(training_data:pd.DataFrame) -> List[float]:
         logger.error(f"Optimization failed: {e}")
         raise
 
-def forecast(initial_cases:int, initial_deaths:int, optimal_params:List[float], T:List[int]):
+def forecast(initial_cases:int, initial_deaths:int, optimal_params:List[float], T:List[int], population:float):
     """
     Forecasts using optimal parameters over the given time range.
     """
-    initial_state = _get_initial_state(initial_cases, initial_deaths, optimal_params)
+    initial_state = _get_initial_state(initial_cases, initial_deaths, optimal_params, population)
 
-    return _predict(optimal_params, initial_state, T)
+    return _predict(optimal_params, initial_state, T, population)
 
 
 #####################
@@ -240,43 +250,57 @@ def forecast(initial_cases:int, initial_deaths:int, optimal_params:List[float], 
 def main():
     log_path = _setup_logging()
     logger.info(f"Run log: {log_path}")
-    logger.info(f"Training data path: {TRAINING_DATA_PATH}")
-    logger.info(f"Date range: {START_DATE} to {END_DATE}, split at {SPLIT_DATE}")
 
-    data = pd.read_csv(TRAINING_DATA_PATH)
-    data["date"] = pd.to_datetime(data.date, errors="coerce").dt.normalize()
-    start_date_dt = pd.to_datetime(START_DATE).to_pydatetime()
-    end_date_dt = pd.to_datetime(END_DATE).to_pydatetime()
-    training_cutoff_date_dt = pd.to_datetime(SPLIT_DATE).to_pydatetime()
+    regions = load_regions()
+    logger.info(f"Loaded {len(regions)} regions; split at start date + {SPLIT_DAYS} days")
 
-    data = data.dropna(subset=["date"]).sort_values("date").drop_duplicates(subset=["date"], keep="last")
-    data = data[(data.date >= start_date_dt) & (data.date <= end_date_dt)].copy().reset_index(drop=True)
-    data['time_index'] = (data["date"] - start_date_dt).dt.days.astype(int)
+    all_params = {}
+    all_scores = {}
+    total_fit_runtime = 0.0
+    param_names = list(default_params_dict.keys())
 
-    training_data = data[data.date <= training_cutoff_date_dt].copy()
-    logger.info(f"Training on {len(training_data)} rows (of {len(data)} total)")
+    for region, info in regions.items():
+        try:
+            data = info["data"]
+            population = info["population"]
+            split_date = info["split_date"]
 
-    fit_start_time = time.time()
-    optimal_params = train(training_data)
-    fit_runtime = time.time() - fit_start_time
-    logger.info(f"Model fitting completed in {fit_runtime:.2f} seconds")
-    logger.info(f"Optimal params: {optimal_params}")
+            training_data = data[data.date <= split_date.to_pydatetime()].copy()
+            logger.info(f"[{region}] Training on {len(training_data)} rows (of {len(data)} total), "
+                        f"{data.date.iloc[0].date()} to {data.date.iloc[-1].date()}, split at {split_date.date()}")
+
+            fit_start_time = time.time()
+            optimal_params = train(training_data, population)
+            fit_runtime = time.time() - fit_start_time
+            total_fit_runtime += fit_runtime
+
+            T = np.array(data.time_index.values)
+            cases_forecast, deaths_forecast = forecast(data.iloc[0]['case_cnt'], data.iloc[0]['death_cnt'], optimal_params, T, population)
+            evals = calculate_scores(data, cases_forecast, deaths_forecast, split_date)
+
+            all_params[region] = dict(zip(param_names, optimal_params))
+            all_scores[region] = evals
+            logger.info(f"[{region}] fit time {fit_runtime:.2f}s, fit_score {evals['fit_score']:.2f}, params {optimal_params}")
+        except Exception as e:
+            logger.error(f"[{region}] failed, skipping: {e}")
+
+    if not all_scores:
+        raise RuntimeError("No region was fitted successfully")
+
     fit_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    with open(f"data/model_params/optimal_params_{fit_timestamp}.json", 'w') as f:
-        json.dump(
-            dict(p for p in zip(list(default_params_dict.keys()), optimal_params)),
-            f
-        )
+    params_path = f"data/model_params/optimal_params_{fit_timestamp}.json"
+    os.makedirs(os.path.dirname(params_path), exist_ok=True)
+    with open(params_path, 'w') as f:
+        json.dump(all_params, f)
+    logger.info(f"Saved params for {len(all_params)} regions to {params_path}")
 
-    T = np.array(data.time_index.values)
-    cases_forecast, deaths_forecast = forecast(data.iloc[0]['case_cnt'], data.iloc[0]['death_cnt'], optimal_params, T)
-
-    evals = calculate_scores(data, cases_forecast, deaths_forecast)
+    evals = aggregate_scores(list(all_scores.values()))
 
     logger.info('--- Experiment Results ---')
+    logger.info(f'Regions evaluated : {len(all_scores)} of {len(regions)}')
     for k, v in evals.items():
         logger.info(f'{k} : {v}')
-    logger.info(f'Fitting run time: {fit_runtime}')
+    logger.info(f'Total fitting run time (all regions): {total_fit_runtime}')
     logger.info('--------------------------')
 
 if __name__ == "__main__":

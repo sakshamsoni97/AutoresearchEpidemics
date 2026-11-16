@@ -61,7 +61,6 @@ local_scripts/*
 
 # logs
 run_logs/*
-data/experiment_results/results.tsv
 
 # Fitted model parameters
 data/model_params/*
