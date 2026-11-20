@@ -100,10 +100,11 @@ N_WORKERS = 12  # regions are fitted in parallel processes; each region still ge
 # Model & Fitting Functions
 ###########################
 
-def _model(t, x, r_e, r_i, gamma, a, population):
+def _model(t, x, r_e, r_i, gamma, a, t_freeze, population):
     """
     SEI compartmental model: susceptible -> exposed -> infected -> removed.
-    Transmission declines exponentially over time to represent interventions.
+    Transmission declines exponentially over time to represent interventions, and is held
+    constant after `t_freeze` (the end of training): we do not extrapolate the decline.
 
     :param t: time step
     :param x: state [S, E, I]
@@ -111,10 +112,11 @@ def _model(t, x, r_e, r_i, gamma, a, population):
     :param r_i : incubation rate (E -> I)
     :param gamma : removal rate out of I
     :param a : exponential decay rate of transmission
+    :param t_freeze : time after which transmission is held constant
     :param population : total population of the region
     """
     S, E, I = x
-    infection = r_e * np.exp(-a * t) * S * I / population
+    infection = r_e * np.exp(-a * min(t, t_freeze)) * S * I / population
     return [-infection, infection - r_i * E, r_i * E - gamma * I]
 
 def _get_initial_state(initial_cases:float, params:List[float], population:float) -> List[float]:
@@ -127,7 +129,7 @@ def _get_initial_state(initial_cases:float, params:List[float], population:float
     S_0 = population - initial_cases - E_0
     return [S_0, E_0, I_0]
 
-def _predict(params:List[float], initial_cases:float, T:np.array, population:float):
+def _predict(params:List[float], initial_cases:float, T:np.array, population:float, t_freeze:float):
     """
     Solve the model IVP and return predictions of cumulative cases and deaths.
     """
@@ -138,7 +140,7 @@ def _predict(params:List[float], initial_cases:float, T:np.array, population:flo
         y0=initial_state,
         t_span=[T[0], T[-1]],
         t_eval=T,
-        args=(r_e, r_i, gamma, a, population),
+        args=(r_e, r_i, gamma, a, t_freeze, population),
     )
     if solution.y.shape[1] != len(T):
         return None, None
@@ -152,7 +154,7 @@ def _residuals(params:List[Any], cases:np.array, deaths:np.array, T:np.array, po
     """
     Recency-weighted relative (MAPE-aligned) squared error on cumulative cases and deaths.
     """
-    cases_pred, deaths_pred = _predict(params, cases[0], T, population)
+    cases_pred, deaths_pred = _predict(params, cases[0], T, population, T[-1])
     if cases_pred is None:
         # ODE integration failed part-way for these params: penalize instead of aborting the fit
         return 1e30
@@ -192,7 +194,8 @@ def forecast(training_data:pd.DataFrame, optimal_params:List[float], T:np.array,
     """
     Forecasts using optimal parameters over the given time range.
     """
-    return _predict(optimal_params, float(training_data.case_cnt.iloc[0]), T, population)
+    t_freeze = training_data.time_index.iloc[-1]
+    return _predict(optimal_params, float(training_data.case_cnt.iloc[0]), T, population, t_freeze)
 
 
 def fit_region(info:dict) -> Tuple[List[float], dict, float]:
