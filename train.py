@@ -8,6 +8,7 @@ from itertools import compress
 
 from scipy.integrate import solve_ivp
 from scipy.optimize import dual_annealing, minimize
+from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timedelta
 from typing import List, Tuple, Any
 import time
@@ -92,6 +93,8 @@ p_dth = 0.05 # probability of death
 optimization_method = 'dual_annealing' # options: 'dual_annealing' or 'tnc', can try other optimizers or combinations of them
 
 tnc_max_iter = 500  # Max num of iterations hyper-parameter for TNC
+
+N_WORKERS = 12  # regions are fitted in parallel processes; each region still gets its own TIME_LIMIT_SECONDS
 
 
 ###########################
@@ -243,6 +246,26 @@ def forecast(initial_cases:int, initial_deaths:int, optimal_params:List[float], 
     return _predict(optimal_params, initial_state, T, population)
 
 
+def fit_region(info:dict) -> Tuple[List[float], dict, float]:
+    """
+    Fit one region on its training period and score the forecast. Runs in a worker process.
+    Returns (optimal_params, evals, fit_runtime).
+    """
+    data = info["data"]
+    population = info["population"]
+    split_date = info["split_date"]
+    training_data = data[data.date <= split_date.to_pydatetime()].copy()
+
+    fit_start_time = time.time()
+    optimal_params = train(training_data, population)
+    fit_runtime = time.time() - fit_start_time
+
+    T = np.array(data.time_index.values)
+    cases_forecast, deaths_forecast = forecast(data.iloc[0]['case_cnt'], data.iloc[0]['death_cnt'], optimal_params, T, population)
+    evals = calculate_scores(data, cases_forecast, deaths_forecast, split_date)
+    return optimal_params, evals, fit_runtime
+
+
 #####################
 # Program entry-point
 #####################
@@ -252,37 +275,25 @@ def main():
     logger.info(f"Run log: {log_path}")
 
     regions = load_regions()
-    logger.info(f"Loaded {len(regions)} regions; split at start date + {SPLIT_DAYS} days")
+    logger.info(f"Loaded {len(regions)} regions; split at start date + {SPLIT_DAYS} days; fitting with {N_WORKERS} workers")
 
     all_params = {}
     all_scores = {}
-    total_fit_runtime = 0.0
     param_names = list(default_params_dict.keys())
 
-    for region, info in regions.items():
-        try:
-            data = info["data"]
-            population = info["population"]
-            split_date = info["split_date"]
-
-            training_data = data[data.date <= split_date.to_pydatetime()].copy()
-            logger.info(f"[{region}] Training on {len(training_data)} rows (of {len(data)} total), "
-                        f"{data.date.iloc[0].date()} to {data.date.iloc[-1].date()}, split at {split_date.date()}")
-
-            fit_start_time = time.time()
-            optimal_params = train(training_data, population)
-            fit_runtime = time.time() - fit_start_time
-            total_fit_runtime += fit_runtime
-
-            T = np.array(data.time_index.values)
-            cases_forecast, deaths_forecast = forecast(data.iloc[0]['case_cnt'], data.iloc[0]['death_cnt'], optimal_params, T, population)
-            evals = calculate_scores(data, cases_forecast, deaths_forecast, split_date)
-
+    wall_start_time = time.time()
+    with ProcessPoolExecutor(max_workers=N_WORKERS) as executor:
+        futures = {region: executor.submit(fit_region, info) for region, info in regions.items()}
+        for region, future in futures.items():
+            try:
+                optimal_params, evals, fit_runtime = future.result()
+            except Exception as e:
+                logger.error(f"[{region}] failed, skipping: {e}")
+                continue
             all_params[region] = dict(zip(param_names, optimal_params))
             all_scores[region] = evals
             logger.info(f"[{region}] fit time {fit_runtime:.2f}s, fit_score {evals['fit_score']:.2f}, params {optimal_params}")
-        except Exception as e:
-            logger.error(f"[{region}] failed, skipping: {e}")
+    wall_runtime = time.time() - wall_start_time
 
     if not all_scores:
         raise RuntimeError("No region was fitted successfully")
@@ -300,7 +311,7 @@ def main():
     logger.info(f'Regions evaluated : {len(all_scores)} of {len(regions)}')
     for k, v in evals.items():
         logger.info(f'{k} : {v}')
-    logger.info(f'Total fitting run time (all regions): {total_fit_runtime}')
+    logger.info(f'Wall-clock fitting time ({N_WORKERS} workers): {wall_runtime}')
     logger.info('--------------------------')
 
 if __name__ == "__main__":
