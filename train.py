@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from scipy.integrate import solve_ivp
-from scipy.optimize import dual_annealing
+from scipy.optimize import dual_annealing, minimize
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 from typing import List, Tuple, Any
@@ -174,13 +174,18 @@ def train(training_data:pd.DataFrame, population:float) -> List[float]:
     deaths = np.array(training_data.death_cnt.values, dtype=float)
     T = np.array(training_data['time_index'].values)
 
+    loss = lambda params: _residuals(params, cases, deaths, T, population)
     model_fit = dual_annealing(
-        lambda params: _residuals(params, cases, deaths, T, population),
+        loss,
         x0=default_params,
         bounds=param_bounds,
         seed=0,
         callback=_make_callback_timeout(time.time()),
     )
+    # The adaptive ODE solver makes the loss non-smooth at small scales, so dual_annealing's
+    # finite-difference L-BFGS-B local search stalls; polish with derivative-free Nelder-Mead.
+    model_fit = minimize(loss, model_fit.x, method='Nelder-Mead', bounds=param_bounds,
+                         options={'maxiter': 4000, 'xatol': 1e-7, 'fatol': 1e-12})
     return list(model_fit.x)
 
 def forecast(training_data:pd.DataFrame, optimal_params:List[float], T:np.array, population:float):
