@@ -1,0 +1,11 @@
+commit	fit_score	fit_runtime	status	description
+8814e59	98.146382	52.24	keep	baseline (unmodified SEIR + dual_annealing, 51 regions)
+faac031	13.162113	63.21	keep	exp1: port jul12 model (SEI + declining transmission + N-S cases + lagged-CFR deaths + relative loss + recency^16)
+1f90ee4	13.512427	63.21	discard	exp2: track cumulative cases as own ODE state (precision hypothesis wrong - no help)
+32b1741	7.572936	74.49	keep	exp3: Nelder-Mead polish after dual_annealing (DA local search stalls on non-smooth ODE loss)
+9b30aa1	8.389657	76.73	discard	exp4: transmission floor f (cases 9.2->7.9 but deaths 5.9->8.9; some regions explode R_inf>1)
+1009988	7.224994	79.52	keep	exp5: freeze transmission at end-of-training value in forecast (same fit; 7.57->7.22)
+b5ad1a3	9.636733	49.91	discard	exp6: decouple deaths fit from cases (both worse: deaths data regularizes the transmission fit)
+7f68487	8.071802	78.20	discard	exp7: recency power 8 (worse; Minnesota blows up 18.8->44.9)
+6fde2cf	13.566457	75.37	discard	exp8: recency power 32 (much worse; 16 is the sweet spot)
+906b805	7.663184	80.70	discard	noise check: seed 1 instead of 0 (7.22 vs 7.66 -> seed noise ~0.4; not kept by design)

@@ -1,0 +1,63 @@
+2026-11-19 19:47:36,973 [INFO] Run log: run_logs/run_20261119_194736.log
+2026-11-19 19:47:37,015 [INFO] Loaded 51 regions; split at start date + 60 days; fitting with 12 workers
+2026-11-19 19:47:49,013 [INFO] [Alabama] fit time 11.63s, fit_score 47.51, params [np.float64(0.6465665606556777), np.float64(0.9), np.float64(0.5163489066040422), np.float64(0.04115087377314159), np.float64(10.0)]
+2026-11-19 19:47:49,013 [INFO] [Alaska] fit time 9.79s, fit_score 37.02, params [np.float64(0.5), np.float64(0.8125364203230042), np.float64(0.47547443529775524), np.float64(0.01), np.float64(5.27233113687513)]
+2026-11-19 19:47:49,013 [INFO] [Arizona] fit time 10.00s, fit_score 72.00, params [np.float64(0.5), np.float64(0.9), np.float64(0.35528503762569835), np.float64(0.0568161811450098), np.float64(10.0)]
+2026-11-19 19:47:49,014 [INFO] [Arkansas] fit time 10.53s, fit_score 25.17, params [np.float64(0.5), np.float64(0.9), np.float64(0.4336873200534992), np.float64(0.016417250755802866), np.float64(10.0)]
+2026-11-19 19:47:49,014 [INFO] [California] fit time 9.62s, fit_score 215.05, params [np.float64(0.5), np.float64(0.9), np.float64(0.30583092040285825), np.float64(0.06888638717097904), np.float64(10.0)]
+2026-11-19 19:47:49,014 [INFO] [Colorado] fit time 10.74s, fit_score 79.20, params [np.float64(1.0330734749416788), np.float64(0.9), np.float64(0.8), np.float64(0.0702378778868604), np.float64(10.0)]
+2026-11-19 19:47:49,014 [INFO] [Connecticut] fit time 10.46s, fit_score 53.57, params [np.float64(1.1114389694229632), np.float64(0.9), np.float64(0.8), np.float64(0.09175354843554549), np.float64(10.0)]
+2026-11-19 19:47:49,014 [INFO] [Delaware] fit time 10.61s, fit_score 32.22, params [np.float64(0.6048079736924491), np.float64(0.9), np.float64(0.47951914899703774), np.float64(0.03114796288948013), np.float64(10.0)]
+2026-11-19 19:47:49,014 [INFO] [District of Columbia] fit time 9.86s, fit_score 42.60, params [np.float64(0.7183455055902771), np.float64(0.9), np.float64(0.5464542171445309), np.float64(0.046892184634937925), np.float64(10.0)]
+2026-11-19 19:47:49,014 [INFO] [Florida] fit time 11.20s, fit_score 224.68, params [np.float64(1.0808075788116935), np.float64(0.9), np.float64(0.7999999520053274), np.float64(0.07865815667993233), np.float64(10.0)]
+2026-11-19 19:47:49,014 [INFO] [Georgia] fit time 9.41s, fit_score 158.76, params [np.float64(0.5), np.float64(0.9), np.float64(0.3296311399506583), np.float64(0.061801228874482625), np.float64(10.0)]
+2026-11-19 19:47:49,014 [INFO] [Hawaii] fit time 10.69s, fit_score 33.93, params [np.float64(0.5), np.float64(0.9), np.float64(0.48474922805737813), np.float64(0.011150293334373399), np.float64(7.817102077394468)]
+2026-11-19 19:47:56,704 [INFO] [Idaho] fit time 9.88s, fit_score 47.18, params [np.float64(0.5), np.float64(0.9), np.float64(0.43456061902721405), np.float64(0.02084731498228869), np.float64(10.0)]
+2026-11-19 19:47:57,790 [INFO] [Illinois] fit time 10.78s, fit_score 57.41, params [np.float64(1.0613456604306841), np.float64(0.9), np.float64(0.8), np.float64(0.06418476721356929), np.float64(10.0)]
+2026-11-19 19:47:58,073 [INFO] [Indiana] fit time 10.89s, fit_score 104.61, params [np.float64(1.090560194281632), np.float64(0.9), np.float64(0.8), np.float64(0.09883318874869373), np.float64(10.0)]
+2026-11-19 19:47:59,079 [INFO] [Iowa] fit time 11.81s, fit_score 28.30, params [np.float64(0.9655076825775039), np.float64(0.9), np.float64(0.8), np.float64(0.025367284947803118), np.float64(10.0)]
+2026-11-19 19:47:59,080 [INFO] [Kansas] fit time 9.89s, fit_score 107.83, params [np.float64(0.5), np.float64(0.9), np.float64(0.3928450117435142), np.float64(0.026378069147957775), np.float64(10.0)]
+2026-11-19 19:47:59,080 [INFO] [Kentucky] fit time 9.97s, fit_score 132.52, params [np.float64(0.5), np.float64(0.9), np.float64(0.3520384071926181), np.float64(0.05722321450710531), np.float64(10.0)]
+2026-11-19 19:47:59,080 [INFO] [Louisiana] fit time 10.94s, fit_score 77.98, params [np.float64(1.1088965091820386), np.float64(0.9), np.float64(0.8), np.float64(0.09885658934993292), np.float64(10.0)]
+2026-11-19 19:47:59,504 [INFO] [Maine] fit time 11.49s, fit_score 24.16, params [np.float64(0.5), np.float64(0.449650798291287), np.float64(0.42901316083162544), np.float64(0.026845352712535724), np.float64(10.0)]
+2026-11-19 19:47:59,504 [INFO] [Maryland] fit time 10.65s, fit_score 57.72, params [np.float64(1.054416482968805), np.float64(0.9), np.float64(0.8), np.float64(0.0694778010565045), np.float64(10.0)]
+2026-11-19 19:47:59,619 [INFO] [Massachusetts] fit time 11.48s, fit_score 43.23, params [np.float64(1.095891566437799), np.float64(0.9), np.float64(0.8), np.float64(0.06815968487661399), np.float64(10.0)]
+2026-11-19 19:47:59,619 [INFO] [Michigan] fit time 10.95s, fit_score 87.98, params [np.float64(1.1279608412182296), np.float64(0.9), np.float64(0.8), np.float64(0.13198735920780447), np.float64(10.0)]
+2026-11-19 19:48:00,609 [INFO] [Minnesota] fit time 11.59s, fit_score 49.78, params [np.float64(0.5), np.float64(0.8205471966954363), np.float64(0.35846728294524205), np.float64(0.0551318142863065), np.float64(9.157255625206714)]
+2026-11-19 19:48:07,604 [INFO] [Mississippi] fit time 10.90s, fit_score 29.34, params [np.float64(0.9676367627954824), np.float64(0.9), np.float64(0.8), np.float64(0.043901498481932234), np.float64(10.0)]
+2026-11-19 19:48:07,604 [INFO] [Missouri] fit time 9.88s, fit_score 155.26, params [np.float64(0.5), np.float64(0.9), np.float64(0.33123165460149595), np.float64(0.07697217707086627), np.float64(10.0)]
+2026-11-19 19:48:08,028 [INFO] [Montana] fit time 10.23s, fit_score 26.68, params [np.float64(0.5), np.float64(0.9), np.float64(0.48189120270887115), np.float64(0.013554658969563498), np.float64(6.627359784315386)]
+2026-11-19 19:48:08,916 [INFO] [Nebraska] fit time 11.08s, fit_score 38.84, params [np.float64(0.9668362363300409), np.float64(0.9), np.float64(0.8), np.float64(0.012816026426301414), np.float64(10.0)]
+2026-11-19 19:48:08,916 [INFO] [Nevada] fit time 9.98s, fit_score 53.53, params [np.float64(0.5), np.float64(0.9), np.float64(0.39487976895613097), np.float64(0.04305715563545267), np.float64(10.0)]
+2026-11-19 19:48:09,901 [INFO] [New Hampshire] fit time 11.15s, fit_score 15.06, params [np.float64(0.9363023532463843), np.float64(0.9), np.float64(0.8), np.float64(0.03720473252101103), np.float64(8.817045216071794)]
+2026-11-19 19:48:09,901 [INFO] [New Jersey] fit time 10.98s, fit_score 54.02, params [np.float64(1.166206111322592), np.float64(0.9), np.float64(0.7975372647116874), np.float64(0.08087618461215537), np.float64(10.0)]
+2026-11-19 19:48:10,757 [INFO] [New Mexico] fit time 11.67s, fit_score 28.86, params [np.float64(0.9494017263669061), np.float64(0.9), np.float64(0.8), np.float64(0.039570127571477993), np.float64(10.0)]
+2026-11-19 19:48:11,033 [INFO] [New York] fit time 11.53s, fit_score 64.36, params [np.float64(1.2210099828498582), np.float64(0.9), np.float64(0.8), np.float64(0.09459796182535939), np.float64(10.0)]
+2026-11-19 19:48:11,033 [INFO] [North Carolina] fit time 10.83s, fit_score 78.82, params [np.float64(0.5), np.float64(0.9), np.float64(0.36838614255071156), np.float64(0.043599027335716294), np.float64(10.0)]
+2026-11-19 19:48:11,033 [INFO] [North Dakota] fit time 9.49s, fit_score 28.84, params [np.float64(0.5110812909719639), np.float64(0.5338058922904597), np.float64(0.4257138416218513), np.float64(0.01683572328792422), np.float64(9.98500888151606)]
+2026-11-19 19:48:11,610 [INFO] [Ohio] fit time 11.00s, fit_score 127.58, params [np.float64(0.5), np.float64(0.9), np.float64(0.329211515304319), np.float64(0.07381208431795333), np.float64(10.0)]
+2026-11-19 19:48:17,485 [INFO] [Oklahoma] fit time 10.32s, fit_score 128.16, params [np.float64(0.5), np.float64(0.9), np.float64(0.3574661220189752), np.float64(0.06252303749632859), np.float64(10.0)]
+2026-11-19 19:48:17,575 [INFO] [Oregon] fit time 9.97s, fit_score 86.97, params [np.float64(0.5), np.float64(0.9), np.float64(0.4009785597192479), np.float64(0.03574818761794264), np.float64(10.0)]
+2026-11-19 19:48:19,889 [INFO] [Pennsylvania] fit time 11.86s, fit_score 79.48, params [np.float64(1.0891871593591917), np.float64(0.9), np.float64(0.8), np.float64(0.09499885010965733), np.float64(10.0)]
+2026-11-19 19:48:19,889 [INFO] [Rhode Island] fit time 10.63s, fit_score 33.96, params [np.float64(0.7799635355874784), np.float64(0.9), np.float64(0.5938413368086897), np.float64(0.0365169913526505), np.float64(10.0)]
+2026-11-19 19:48:19,889 [INFO] [South Carolina] fit time 10.40s, fit_score 87.85, params [np.float64(0.5031045598534142), np.float64(0.9), np.float64(0.3715937514845415), np.float64(0.04873497219768179), np.float64(10.0)]
+2026-11-19 19:48:20,276 [INFO] [South Dakota] fit time 11.16s, fit_score 32.83, params [np.float64(0.9464805607788069), np.float64(0.6681326645629352), np.float64(0.8), np.float64(0.01), np.float64(9.92836299025432)]
+2026-11-19 19:48:21,186 [INFO] [Tennessee] fit time 11.34s, fit_score 72.61, params [np.float64(0.5), np.float64(0.9), np.float64(0.40322948355103705), np.float64(0.018195803962014576), np.float64(10.0)]
+2026-11-19 19:48:21,186 [INFO] [Texas] fit time 10.32s, fit_score 227.52, params [np.float64(0.5), np.float64(0.9), np.float64(0.32753353040427874), np.float64(0.0513762002851176), np.float64(10.0)]
+2026-11-19 19:48:22,151 [INFO] [Utah] fit time 11.76s, fit_score 27.21, params [np.float64(0.9072214756052818), np.float64(0.9), np.float64(0.7999886639934471), np.float64(0.01), np.float64(10.0)]
+2026-11-19 19:48:22,151 [INFO] [Vermont] fit time 9.72s, fit_score 465.30, params [np.float64(0.5), np.float64(0.9), np.float64(0.2739005868487746), np.float64(0.09209275695983671), np.float64(10.0)]
+2026-11-19 19:48:22,151 [INFO] [Virginia] fit time 10.83s, fit_score 85.69, params [np.float64(1.023749686216318), np.float64(0.9), np.float64(0.8), np.float64(0.051927841994388324), np.float64(10.0)]
+2026-11-19 19:48:22,151 [INFO] [Washington] fit time 10.04s, fit_score 1029.46, params [np.float64(0.5764097700741954), np.float64(0.9), np.float64(0.20656280932646548), np.float64(0.15703966894514887), np.float64(10.0)]
+2026-11-19 19:48:27,129 [INFO] [West Virginia] fit time 9.64s, fit_score 24.37, params [np.float64(0.5), np.float64(0.6068787833993567), np.float64(0.441982889171033), np.float64(0.02427184907694436), np.float64(9.729108610248481)]
+2026-11-19 19:48:27,129 [INFO] [Wisconsin] fit time 9.17s, fit_score 65.28, params [np.float64(0.5), np.float64(0.9), np.float64(0.37883015081041743), np.float64(0.04612656788086662), np.float64(10.0)]
+2026-11-19 19:48:29,186 [INFO] [Wyoming] fit time 10.49s, fit_score 17.15, params [np.float64(0.865989636556443), np.float64(0.768089510388838), np.float64(0.7882493970594859), np.float64(0.01), np.float64(2.8437039001950226)]
+2026-11-19 19:48:29,258 [INFO] Saved params for 51 regions to data/model_params/optimal_params_20261119_194829.json
+2026-11-19 19:48:29,258 [INFO] --- Experiment Results ---
+2026-11-19 19:48:29,258 [INFO] Regions evaluated : 51 of 51
+2026-11-19 19:48:29,258 [INFO] MAPE Cases Training : 40.88098403277493
+2026-11-19 19:48:29,258 [INFO] MAPE Deaths Training : 41.6111400842377
+2026-11-19 19:48:29,258 [INFO] MAPE Cases Test : 71.13816775183336
+2026-11-19 19:48:29,258 [INFO] MAPE Deaths Test : 125.15459567125279
+2026-11-19 19:48:29,258 [INFO] fit_score : 98.14638171154307
+2026-11-19 19:48:29,258 [INFO] Wall-clock fitting time (12 workers): 52.24234104156494
+2026-11-19 19:48:29,258 [INFO] --------------------------

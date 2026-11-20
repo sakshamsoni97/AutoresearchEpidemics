@@ -1,0 +1,63 @@
+2026-11-19 20:00:44,284 [INFO] Run log: run_logs/run_20261119_200044.log
+2026-11-19 20:00:44,339 [INFO] Loaded 51 regions; split at start date + 60 days; fitting with 12 workers
+2026-11-19 20:00:53,063 [INFO] [Alabama] fit time 8.35s, fit_score 8.56, params [0.6201, 0.0731, 0.2772, 4.5882, 0.0107, 0.0401, 0.0]
+2026-11-19 20:00:53,591 [INFO] [Alaska] fit time 8.87s, fit_score 17.36, params [0.0593, 0.52, 0.01, 0.1, 0.0318, 0.0233, 0.0]
+2026-11-19 20:00:53,591 [INFO] [Arizona] fit time 8.37s, fit_score 12.14, params [0.8423, 0.0637, 0.4088, 7.3555, 0.0082, 0.0618, 7.75]
+2026-11-19 20:00:53,591 [INFO] [Arkansas] fit time 8.75s, fit_score 11.49, params [0.8274, 0.05, 0.6645, 7.0509, 0.0, 0.0213, 0.0]
+2026-11-19 20:00:53,591 [INFO] [California] fit time 8.64s, fit_score 3.39, params [2.0561, 0.05, 0.532, 10.0, 0.0185, 0.0443, 2.75]
+2026-11-19 20:00:59,208 [INFO] [Colorado] fit time 14.48s, fit_score 9.04, params [1.6375, 0.2925, 0.9994, 0.1, 0.0112, 0.0506, 0.0]
+2026-11-19 20:00:59,208 [INFO] [Connecticut] fit time 10.42s, fit_score 8.19, params [0.6319, 0.05, 0.01, 10.0, 0.0559, 0.0968, 4.25]
+2026-11-19 20:00:59,208 [INFO] [Delaware] fit time 10.63s, fit_score 5.51, params [1.5023, 0.1081, 0.6637, 0.1089, 0.0164, 0.0415, 4.75]
+2026-11-19 20:00:59,208 [INFO] [District of Columbia] fit time 11.08s, fit_score 19.46, params [1.3039, 0.2824, 0.01, 9.1466, 0.2598, 0.0538, 30.0]
+2026-11-19 20:00:59,208 [INFO] [Florida] fit time 11.37s, fit_score 4.63, params [0.9221, 0.05, 0.01, 10.0, 0.0628, 0.0494, 8.25]
+2026-11-19 20:00:59,208 [INFO] [Georgia] fit time 9.02s, fit_score 4.28, params [0.8213, 0.2639, 0.6317, 9.9558, 0.0059, 0.0445, 2.0]
+2026-11-19 20:00:59,208 [INFO] [Hawaii] fit time 9.96s, fit_score 4.73, params [0.7891, 0.0855, 0.6551, 1.5812, 0.0387, 0.0265, 0.0]
+2026-11-19 20:01:07,422 [INFO] [Idaho] fit time 14.36s, fit_score 7.55, params [0.0549, 0.8993, 0.0729, 7.8798, 0.0, 0.0303, 0.0]
+2026-11-19 20:01:07,422 [INFO] [Illinois] fit time 10.77s, fit_score 16.35, params [0.2442, 0.2271, 0.01, 9.9824, 0.0323, 0.0482, 2.75]
+2026-11-19 20:01:07,422 [INFO] [Indiana] fit time 11.89s, fit_score 5.66, params [0.5287, 0.05, 0.01, 10.0, 0.0488, 0.0651, 1.5]
+2026-11-19 20:01:07,422 [INFO] [Iowa] fit time 11.68s, fit_score 2.02, params [2.2927, 0.0991, 0.9087, 0.1, 0.0168, 0.0333, 10.5]
+2026-11-19 20:01:07,422 [INFO] [Kansas] fit time 10.62s, fit_score 3.01, params [0.3855, 0.5457, 0.2215, 0.217, 0.0133, 0.0233, 0.0]
+2026-11-19 20:01:07,422 [INFO] [Kentucky] fit time 12.42s, fit_score 3.90, params [1.7527, 0.1341, 0.9282, 0.1281, 0.0129, 0.0456, 0.25]
+2026-11-19 20:01:07,422 [INFO] [Louisiana] fit time 12.09s, fit_score 2.76, params [0.2122, 0.9, 0.01, 10.0, 0.0486, 0.0757, 4.0]
+2026-11-19 20:01:07,422 [INFO] [Maine] fit time 10.41s, fit_score 18.43, params [0.9084, 0.05, 0.6176, 0.635, 0.0, 0.0404, 0.0]
+2026-11-19 20:01:07,422 [INFO] [Maryland] fit time 8.98s, fit_score 4.98, params [2.9874, 0.05, 0.6847, 2.3593, 0.0228, 0.052, 0.5]
+2026-11-19 20:01:07,422 [INFO] [Massachusetts] fit time 9.52s, fit_score 3.03, params [2.0996, 0.0923, 0.509, 2.2959, 0.0283, 0.0767, 10.75]
+2026-11-19 20:01:12,800 [INFO] [Michigan] fit time 16.69s, fit_score 1.39, params [1.045, 0.9, 1.0, 10.0, 0.0017, 0.0942, 0.0]
+2026-11-19 20:01:12,800 [INFO] [Minnesota] fit time 10.15s, fit_score 44.95, params [0.1622, 0.7227, 0.01, 0.1, 0.0175, 0.0468, 0.0]
+2026-11-19 20:01:14,092 [INFO] [Mississippi] fit time 10.22s, fit_score 3.91, params [0.7686, 0.0578, 0.2039, 1.4777, 0.0215, 0.0552, 7.0]
+2026-11-19 20:01:14,635 [INFO] [Missouri] fit time 10.42s, fit_score 7.26, params [1.4818, 0.0835, 0.9528, 9.7652, 0.0117, 0.0714, 8.25]
+2026-11-19 20:01:14,636 [INFO] [Montana] fit time 9.02s, fit_score 12.77, params [0.5522, 0.0565, 0.5331, 1.0115, 0.023, 0.0345, 6.0]
+2026-11-19 20:01:18,903 [INFO] [Nebraska] fit time 13.74s, fit_score 4.26, params [0.1812, 0.5979, 0.0354, 2.6657, 0.0254, 0.0123, 1.0]
+2026-11-19 20:01:18,903 [INFO] [Nevada] fit time 11.61s, fit_score 22.66, params [2.2316, 0.6588, 0.5678, 8.5632, 0.3566, 0.0506, 30.0]
+2026-11-19 20:01:18,903 [INFO] [New Hampshire] fit time 10.17s, fit_score 10.09, params [0.9664, 0.354, 0.9105, 0.6256, 0.0006, 0.0971, 25.5]
+2026-11-19 20:01:18,903 [INFO] [New Jersey] fit time 10.99s, fit_score 2.54, params [2.3076, 0.0601, 0.1057, 1.0503, 0.0688, 0.087, 7.0]
+2026-11-19 20:01:18,903 [INFO] [New Mexico] fit time 8.08s, fit_score 4.22, params [0.5599, 0.05, 0.1373, 1.8521, 0.0218, 0.0555, 8.5]
+2026-11-19 20:01:18,903 [INFO] [New York] fit time 11.17s, fit_score 4.02, params [2.3584, 0.214, 0.8848, 9.293, 0.0259, 0.0824, 2.5]
+2026-11-19 20:01:18,903 [INFO] [North Carolina] fit time 11.01s, fit_score 10.69, params [1.1419, 0.2131, 1.0, 5.9196, 0.0, 0.0364, 0.0]
+2026-11-19 20:01:19,422 [INFO] [North Dakota] fit time 10.06s, fit_score 22.66, params [1.9937, 0.6289, 0.6691, 8.5873, 0.4231, 0.0228, 30.0]
+2026-11-19 20:01:21,800 [INFO] [Ohio] fit time 9.00s, fit_score 1.80, params [1.1695, 0.0595, 0.3459, 7.5223, 0.0216, 0.0658, 5.75]
+2026-11-19 20:01:24,008 [INFO] [Oklahoma] fit time 10.64s, fit_score 11.23, params [0.0951, 0.647, 0.0914, 9.27, 0.0, 0.0534, 0.0]
+2026-11-19 20:01:24,366 [INFO] [Oregon] fit time 10.27s, fit_score 5.26, params [0.3168, 0.1245, 0.0706, 0.1, 0.0296, 0.0381, 0.0]
+2026-11-19 20:01:25,840 [INFO] [Pennsylvania] fit time 11.57s, fit_score 2.59, params [3.0334, 0.0753, 0.9169, 9.3875, 0.0259, 0.0868, 12.75]
+2026-11-19 20:01:27,940 [INFO] [Rhode Island] fit time 13.30s, fit_score 10.89, params [0.401, 0.05, 0.01, 9.9698, 0.0476, 0.0436, 2.75]
+2026-11-19 20:01:27,940 [INFO] [South Carolina] fit time 12.07s, fit_score 30.08, params [2.3004, 0.6875, 0.4619, 7.6481, 0.3142, 0.0441, 30.0]
+2026-11-19 20:01:27,940 [INFO] [South Dakota] fit time 9.99s, fit_score 3.30, params [1.2504, 0.0548, 0.4225, 0.8101, 0.0215, 0.0133, 8.75]
+2026-11-19 20:01:27,940 [INFO] [Tennessee] fit time 10.71s, fit_score 6.39, params [1.9779, 0.0682, 0.6092, 0.2668, 0.022, 0.0176, 2.0]
+2026-11-19 20:01:27,940 [INFO] [Texas] fit time 8.49s, fit_score 6.41, params [1.4683, 0.0531, 0.4302, 9.9455, 0.017, 0.0306, 0.0]
+2026-11-19 20:01:27,940 [INFO] [Utah] fit time 8.89s, fit_score 6.81, params [0.4923, 0.2439, 0.4648, 4.0258, 0.0002, 0.0164, 15.5]
+2026-11-19 20:01:27,940 [INFO] [Vermont] fit time 8.96s, fit_score 4.49, params [0.3766, 0.1329, 0.6934, 4.8293, 0.0, 0.0568, 0.0]
+2026-11-19 20:01:27,940 [INFO] [Virginia] fit time 8.46s, fit_score 8.59, params [0.6156, 0.1077, 0.2488, 5.744, 0.0127, 0.0337, 0.0]
+2026-11-19 20:01:32,243 [INFO] [Washington] fit time 10.44s, fit_score 18.66, params [2.2121, 0.355, 0.6762, 3.0927, 0.091, 0.0589, 28.75]
+2026-11-19 20:01:32,243 [INFO] [West Virginia] fit time 7.71s, fit_score 20.30, params [0.1779, 0.0614, 0.1346, 2.3955, 0.0, 0.0402, 0.0]
+2026-11-19 20:01:33,163 [INFO] [Wisconsin] fit time 8.80s, fit_score 16.52, params [1.5186, 0.05, 0.9379, 9.4258, 0.0014, 0.0414, 0.0]
+2026-11-19 20:01:34,178 [INFO] [Wyoming] fit time 8.34s, fit_score 10.25, params [0.1334, 0.0547, 0.01, 0.1, 0.0314, 0.0296, 30.0]
+2026-11-19 20:01:34,253 [INFO] Saved params for 51 regions to data/model_params/optimal_params_20261119_200134.json
+2026-11-19 20:01:34,254 [INFO] --- Experiment Results ---
+2026-11-19 20:01:34,254 [INFO] Regions evaluated : 51 of 51
+2026-11-19 20:01:34,254 [INFO] MAPE Cases Training : 42.06807337181381
+2026-11-19 20:01:34,254 [INFO] MAPE Deaths Training : 74.31226361976029
+2026-11-19 20:01:34,254 [INFO] MAPE Cases Test : 9.287567666876631
+2026-11-19 20:01:34,254 [INFO] MAPE Deaths Test : 9.985898201655095
+2026-11-19 20:01:34,254 [INFO] fit_score : 9.636732934265861
+2026-11-19 20:01:34,254 [INFO] Wall-clock fitting time (12 workers): 49.91347098350525
+2026-11-19 20:01:34,254 [INFO] --------------------------
