@@ -58,8 +58,3 @@ ENV/
 
 # Local only files
 local_data_preparation.ipynb
-
-# logs
-run_logs/*
-run.log
-data/experiment_results/results.tsv

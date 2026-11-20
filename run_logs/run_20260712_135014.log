@@ -1,0 +1,14 @@
+2026-07-12 13:50:14,215 [INFO] Run log: run_logs/run_20260712_135014.log
+2026-07-12 13:50:14,215 [INFO] Training data path: data/training/covid19_cases_deaths_us-ny.csv
+2026-07-12 13:50:14,215 [INFO] Date range: 2020-03-08 to 2020-06-06, split at 2020-05-07
+2026-07-12 13:50:14,218 [INFO] Training on 61 rows (of 91 total)
+2026-07-12 13:50:26,678 [INFO] Model fitting completed in 12.46 seconds
+2026-07-12 13:50:26,678 [INFO] Optimal params: [np.float64(1.0), np.float64(0.13862943611198905), np.float64(0.06931471805599453), np.float64(0.06931471805599453), np.float64(3.0), np.float64(0.02)]
+2026-07-12 13:50:26,680 [INFO] --- Experiment Results ---
+2026-07-12 13:50:26,680 [INFO] MAPE Cases Training : 53.97826777182756
+2026-07-12 13:50:26,680 [INFO] MAPE Deaths Training : 76.38995303755539
+2026-07-12 13:50:26,680 [INFO] MAPE Cases Test : 189.43137583078948
+2026-07-12 13:50:26,680 [INFO] MAPE Deaths Test : 153.80922066658812
+2026-07-12 13:50:26,680 [INFO] fit_score : 171.6202982486888
+2026-07-12 13:50:26,681 [INFO] Fitting run time: 12.460181951522827
+2026-07-12 13:50:26,681 [INFO] --------------------------
