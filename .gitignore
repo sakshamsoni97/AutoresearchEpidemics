@@ -59,10 +59,6 @@ ENV/
 # Local only files
 local_scripts/*
 
-# logs
-run_logs/*
-
-# Fitted model parameters
-data/model_params/*
+# Training data
 data/raw_data/*
 data/training/*
