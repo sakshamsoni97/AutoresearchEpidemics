@@ -4,12 +4,11 @@
 
 import numpy as np
 import pandas as pd
-from itertools import compress
 
 from scipy.integrate import solve_ivp
-from scipy.optimize import dual_annealing, minimize
+from scipy.optimize import dual_annealing
 from concurrent.futures import ProcessPoolExecutor
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Tuple, Any
 import time
 import logging
@@ -73,26 +72,26 @@ def _make_callback_timeout(fit_start_time:float):
 ##################
 
 default_params_dict = {
-    'r_e': 1.0,
-    'r_i': np.log(2) / 5.0,     # log(2) / days_of_incubation
-    'r_r': np.log(2) / 10.0,    # log(2) / days_for_recovery
-    'r_d': np.log(2) / 10.0,    # log(2) / days_for_death
-    'k': 3.0                    # experimentally set
+    'r_e': 1.0,                 # transmission rate at t=0
+    'r_i': np.log(2) / 5.0,     # incubation rate (E -> I)
+    'gamma': np.log(2) / 10.0,  # removal rate out of I
+    'k': 3.0,                   # initial exposed-to-infected ratio (E_0 = k * I_0)
+    'a': 0.02,                  # exponential decay rate of transmission (interventions)
+    'p_dth': 0.05,              # case fatality ratio (deaths = p_dth * lagged cases)
+    'lag': 10.0,                # days from case confirmation to death
 }
 
 param_bounds = [
-    (0.5, 2.0),
+    (0.05, 5.0),
     (0.05, 0.9),
-    (0.01, 0.8),
-    (0.01, 0.8),
-    (0.1, 10.0)
+    (0.01, 1.0),
+    (0.1, 10.0),
+    (0.0, 0.5),
+    (0.005, 0.5),
+    (0.0, 21.0),
 ]
 
-p_dth = 0.05 # probability of death
-
-optimization_method = 'dual_annealing' # options: 'dual_annealing' or 'tnc', can try other optimizers or combinations of them
-
-tnc_max_iter = 500  # Max num of iterations hyper-parameter for TNC
+recency_power = 16  # weight of training day i is (i/n)^recency_power
 
 N_WORKERS = 12  # regions are fitted in parallel processes; each region still gets its own TIME_LIMIT_SECONDS
 
@@ -101,149 +100,94 @@ N_WORKERS = 12  # regions are fitted in parallel processes; each region still ge
 # Model & Fitting Functions
 ###########################
 
-def _model(t, x, r_e, r_i, r_r, r_d, k, population):
+def _model(t, x, r_e, r_i, gamma, a, population):
     """
-    SEIR based model to compute the change in state from time t to (t+1) given the state at time t and model parameters.
-    The model uses 5 primary state variables (susceptible, exposed, infected, recovered & dead) and 5 parameters
-        
+    SEI compartmental model: susceptible -> exposed -> infected -> removed.
+    Transmission declines exponentially over time to represent interventions.
+
     :param t: time step
-    :param x: state of the infectious disease spread given as a list of variables
-    :param r_e : rate of exposure
-    :param r_i : rate of infection
-    :param r_r : rate of revovery
-    :param r_d : rate of death
-    :param k : ratio to calculate initial state
+    :param x: state [S, E, I]
+    :param r_e : transmission rate at t=0
+    :param r_i : incubation rate (E -> I)
+    :param gamma : removal rate out of I
+    :param a : exponential decay rate of transmission
     :param population : total population of the region
     """
-    assert len(x) == 5, f"Wrong number of input states, got {len(x)}, expected 6"
-    S, E, I, R, D = x
-    dSdt = - r_e * S * I / population
-    dEdt = r_e * S * I / population - r_i * E
-    dIdt = r_i * E - (r_r + r_d) * I
-    dRdt = r_r * (1-p_dth) * I
-    dDdt = r_d * p_dth * I
+    S, E, I = x
+    infection = r_e * np.exp(-a * t) * S * I / population
+    return [-infection, infection - r_i * E, r_i * E - gamma * I]
 
-    return [dSdt, dEdt, dIdt, dRdt, dDdt]
-
-def _get_initial_state(initial_cases:int, initial_deaths:int, params_fitted:List[float], population:float) -> List[float]:
+def _get_initial_state(initial_cases:float, params:List[float], population:float) -> List[float]:
     """
-    Compute initial state to solve the IVP using initial observations and fitted params
+    Compute initial [S, E, I] state from the first observed case count and params.
     """
-
-    r_e, r_i, r_r, r_d, k = params_fitted    
-    D_0 = initial_deaths 
-    R_0 = initial_deaths / p_dth - initial_deaths
-    # Some regions start with deaths/p_dth > cases, which would give negative states; keep at least 1 infected
-    I_0 = max(initial_cases - R_0 - D_0, 1.0)
-    E_0 = I_0 * k
+    k = params[3]
+    I_0 = initial_cases
+    E_0 = k * I_0
     S_0 = population - initial_cases - E_0
+    return [S_0, E_0, I_0]
 
-    return [S_0, E_0, I_0, R_0, D_0]
-
-def _apply_bounds(params:List[float]) -> List[float]:
-    params_bounded = [
-        max(min(x, bounds[1]), bounds[0])
-        for (x, bounds) in zip(params, param_bounds)
-    ]
-    return params_bounded
-
-def _predict(params:List[float], initial_state:List, T:np.array, population:float):
+def _predict(params:List[float], initial_cases:float, T:np.array, population:float):
     """
-    Solve the SEIR model IVP and return predictions of cases and deaths.
+    Solve the model IVP and return predictions of cumulative cases and deaths.
     """
-
-    try:
-        solution = solve_ivp(
-            fun=_model,
-            y0=initial_state,
-            t_span=[T[0], T[-1]],
-            t_eval=T,
-            args=(*params, population)
-        )
-        y_sol = solution.y
-        # return cases and deaths prediction
-        return y_sol[2, :], y_sol[4, :]
-    except Exception as e:
-        logger.error(f"_predict failed for params={params}, initial_state={initial_state}: {e}")
-        raise
+    r_e, r_i, gamma, k, a, p_dth, lag = params
+    initial_state = _get_initial_state(initial_cases, params, population)
+    solution = solve_ivp(
+        fun=_model,
+        y0=initial_state,
+        t_span=[T[0], T[-1]],
+        t_eval=T,
+        args=(r_e, r_i, gamma, a, population),
+    )
+    if solution.y.shape[1] != len(T):
+        return None, None
+    # cumulative cases = initial cases + everyone who has left S since t=0 (monotonic)
+    cases = initial_cases + initial_state[0] - solution.y[0, :]
+    # deaths = case fatality ratio * cumulative cases lagged by confirmation-to-death time
+    deaths = p_dth * np.interp(T - lag, T, cases)
+    return cases, deaths
 
 def _residuals(params:List[Any], cases:np.array, deaths:np.array, T:np.array, population:float) -> float:
     """
-    Create the residual value from fitted parameters, initial state and observations
+    Recency-weighted relative (MAPE-aligned) squared error on cumulative cases and deaths.
     """
-    try:
-        # Check & apply bounds
-        params = _apply_bounds(params)
+    cases_pred, deaths_pred = _predict(params, cases[0], T, population)
+    if cases_pred is None:
+        # ODE integration failed part-way for these params: penalize instead of aborting the fit
+        return 1e30
 
-        initial_state = _get_initial_state(cases[0], deaths[0], params, population)
-
-        # predict and calc residuals
-        cases_pred, deaths_pred = _predict(params, initial_state, T, population)
-        if len(cases_pred) != len(cases):
-            # ODE integration failed part-way for these params: penalize instead of aborting the fit
-            return 1e30
-
-        # Weigh recent observations higher
-        weights = list(range(1, len(cases) + 1))
-        weights = [( x / len(cases) )**2 for x in weights]
-        # Balance contribution of deaths and cases in the score
-        balance = (cases[-1] / max(deaths[-1], 10))**2
-
-        res = np.sum(
-            np.multiply((cases - cases_pred)**2, weights) +
-            balance * np.multiply((deaths - deaths_pred)**2, weights)
-        )
-        return res
-    except Exception as e:
-        logger.error(f"_residuals failed for params={params}: {e}")
-        raise
+    n = len(cases)
+    weights = (np.arange(1, n + 1) / n) ** recency_power
+    cmask = cases > 0
+    dmask = deaths > 0
+    case_err = ((cases[cmask] - cases_pred[cmask]) / cases[cmask]) ** 2 * weights[cmask]
+    death_err = ((deaths[dmask] - deaths_pred[dmask]) / deaths[dmask]) ** 2 * weights[dmask]
+    return np.sum(case_err) + np.sum(death_err)
 
 def train(training_data:pd.DataFrame, population:float) -> List[float]:
     """
     Fits the model to the cases and deaths and returns the optimal params
     """
-    try:
-        default_params = list(default_params_dict.values())
-        cases = np.array(training_data.case_cnt.values)
-        deaths = np.array(training_data.death_cnt.values)
-        T = np.array(training_data['time_index'].values)
+    default_params = list(default_params_dict.values())
+    cases = np.array(training_data.case_cnt.values, dtype=float)
+    deaths = np.array(training_data.death_cnt.values, dtype=float)
+    T = np.array(training_data['time_index'].values)
 
-        def _residuals_fit(params):
-            """
-            Wrapper around `residuals` to use for fitting the parameters
-            """
-            return _residuals(params, cases, deaths, T, population)
+    model_fit = dual_annealing(
+        lambda params: _residuals(params, cases, deaths, T, population),
+        x0=default_params,
+        bounds=param_bounds,
+        seed=0,
+        callback=_make_callback_timeout(time.time()),
+    )
+    return list(model_fit.x)
 
-        if optimization_method == 'dual_annealing':
-            model_fit = dual_annealing(
-                _residuals_fit,
-                x0 = default_params,
-                bounds = param_bounds,
-                callback=_make_callback_timeout(time.time())
-            )
-        elif optimization_method == 'tnc':
-            model_fit = minimize(
-                _residuals_fit,
-                default_params,
-                method='TNC',
-                bounds=param_bounds,
-                options={'maxiter': tnc_max_iter}
-            )
-        else:
-            raise ValueError(f'Undefined optimization method {optimization_method}')
-
-        return list(model_fit.x)
-    except Exception as e:
-        logger.error(f"Optimization failed: {e}")
-        raise
-
-def forecast(initial_cases:int, initial_deaths:int, optimal_params:List[float], T:List[int], population:float):
+def forecast(training_data:pd.DataFrame, optimal_params:List[float], T:np.array, population:float):
     """
     Forecasts using optimal parameters over the given time range.
     """
-    initial_state = _get_initial_state(initial_cases, initial_deaths, optimal_params, population)
-
-    return _predict(optimal_params, initial_state, T, population)
+    return _predict(optimal_params, float(training_data.case_cnt.iloc[0]), T, population)
 
 
 def fit_region(info:dict) -> Tuple[List[float], dict, float]:
@@ -261,7 +205,7 @@ def fit_region(info:dict) -> Tuple[List[float], dict, float]:
     fit_runtime = time.time() - fit_start_time
 
     T = np.array(data.time_index.values)
-    cases_forecast, deaths_forecast = forecast(data.iloc[0]['case_cnt'], data.iloc[0]['death_cnt'], optimal_params, T, population)
+    cases_forecast, deaths_forecast = forecast(training_data, optimal_params, T, population)
     evals = calculate_scores(data, cases_forecast, deaths_forecast, split_date)
     return optimal_params, evals, fit_runtime
 
@@ -290,9 +234,9 @@ def main():
             except Exception as e:
                 logger.error(f"[{region}] failed, skipping: {e}")
                 continue
-            all_params[region] = dict(zip(param_names, optimal_params))
+            all_params[region] = dict(zip(param_names, map(float, optimal_params)))
             all_scores[region] = evals
-            logger.info(f"[{region}] fit time {fit_runtime:.2f}s, fit_score {evals['fit_score']:.2f}, params {optimal_params}")
+            logger.info(f"[{region}] fit time {fit_runtime:.2f}s, fit_score {evals['fit_score']:.2f}, params {np.round(optimal_params, 4).tolist()}")
     wall_runtime = time.time() - wall_start_time
 
     if not all_scores:
