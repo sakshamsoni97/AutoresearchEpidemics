@@ -58,6 +58,7 @@ ENV/
 
 # Local only files
 local_scripts/*
+run.log
 
 # Training data
 data/raw_data/*
